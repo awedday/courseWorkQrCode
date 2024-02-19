@@ -17,47 +17,59 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.vision.CameraSource;
+import com.google.android.gms.vision.Detector;
+import com.google.android.gms.vision.barcode.Barcode;
+import com.google.android.gms.vision.barcode.BarcodeDetector;
+
+import java.io.IOException;
 import java.util.Collections;
 
 public class MainActivity extends AppCompatActivity {
+    private boolean isDataDisplayed = false;
 
     private static final int REQUEST_CODE_PERMISSION = 1001;
     private double targetLatitude = 55.712477; // Заданные координаты
     private double targetLongitude = 37.476842;
+
     private static final int CAMERA_PERMISSION_REQUEST_CODE = 100;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 101;
     private static final String TAG = "CameraExample";
 
-    private CameraManager cameraManager;
-    private String cameraId;
-    private CameraDevice cameraDevice;
-    private CameraCaptureSession cameraCaptureSession;
-    private CaptureRequest.Builder captureRequestBuilder;
-
-    private HandlerThread backgroundThread;
-    private Handler backgroundHandler;
+//    private CameraManager cameraManager;
+//    private String cameraId;
+//    private CameraDevice cameraDevice;
+//    private CameraCaptureSession cameraCaptureSession;
+//    private CaptureRequest.Builder captureRequestBuilder;
+//
+//    private HandlerThread backgroundThread;
+//    private Handler backgroundHandler;
+    private SurfaceView surfaceView;
+    private CameraSource cameraSource;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Проверка разрешения на использование камеры
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA},
                     CAMERA_PERMISSION_REQUEST_CODE);
         } else {
-            // Разрешение на использование камеры уже получено
-            openCamera();
+
         }
 
         String androidId = PhoneInfoHelper.getAndroidId(getApplicationContext());
@@ -69,28 +81,72 @@ public class MainActivity extends AppCompatActivity {
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE_PERMISSION);
         }
+        surfaceView = findViewById(R.id.surfaceView);
 
-        SurfaceView surfaceView = findViewById(R.id.surfaceView);
+        BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(this)
+                .setBarcodeFormats(Barcode.QR_CODE)
+                .build();
+
+        cameraSource = new CameraSource.Builder(this, barcodeDetector)
+                .setAutoFocusEnabled(true)
+                .build();
 
         surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
-            public void surfaceCreated(SurfaceHolder surfaceHolder) {
-                // Открываем камеру при создании Surface
-                openCamera();
+            public void surfaceCreated(@NonNull SurfaceHolder holder) {
+                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                    try {
+                        cameraSource.start(surfaceView.getHolder());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
+                }
             }
 
             @Override
-            public void surfaceChanged(SurfaceHolder surfaceHolder, int format, int width, int height) {
-                // Ничего не делаем здесь
+            public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
+
             }
 
             @Override
-            public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
-                // Закрываем камеру при уничтожении Surface
-                closeCamera();
+            public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+                cameraSource.stop();
             }
         });
+
+        barcodeDetector.setProcessor(new Detector.Processor<Barcode>() {
+            @Override
+            public void release() {
+
+            }
+
+            @Override
+            public void receiveDetections(Detector.Detections<Barcode> detections) {
+                final SparseArray<Barcode> barcodes = detections.getDetectedItems();
+                if (barcodes.size() != 0) {
+                    String qrCodeText = barcodes.valueAt(0).displayValue;
+                    // Выводим текст QR-кода в лог
+                    Log.d("QRCodeReaderActivity", qrCodeText);
+
+                    // Действия с текстом из QR-кода
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            // Ваш код для обработки текста из QR-кода здесь
+                            // Например, вывод на экран или обработка каких-либо действий
+                            Toast.makeText(MainActivity.this, qrCodeText, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    isDataDisplayed = true; // Устанавливаем флаг, что данные уже выведены
+
+                }
+            }
+        });
+
     }
+
 
 
     private boolean checkLocationPermission() {
@@ -137,136 +193,5 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-    private void openCamera() {
-        cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-
-        try {
-            // Получаем ID задней (rear) камеры
-            cameraId = cameraManager.getCameraIdList()[0];
-
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-                    == PackageManager.PERMISSION_GRANTED) {
-                // Открываем камеру
-                cameraManager.openCamera(cameraId, stateCallback, backgroundHandler);
-
-            }
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void closeCamera() {
-        if (cameraCaptureSession != null) {
-            cameraCaptureSession.close();
-            cameraCaptureSession = null;
-        }
-
-        if (cameraDevice != null) {
-            cameraDevice.close();
-            cameraDevice = null;
-        }
-    }
-
-    private CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
-        @Override
-        public void onOpened(@NonNull CameraDevice camera) {
-            // Камера успешно открыта
-            cameraDevice = camera;
-            createCameraPreview();
-
-        }
-
-        @Override
-        public void onDisconnected(@NonNull CameraDevice camera) {
-            // Камера отключена
-            closeCamera();
-        }
-
-        @Override
-        public void onError(@NonNull CameraDevice camera, int error) {
-            // Ошибка при открытии камеры
-            closeCamera();
-        }
-    };
-
-    private void createCameraPreview() {
-        try {
-            SurfaceView surfaceView = findViewById(R.id.surfaceView);
-            Surface surface = surfaceView.getHolder().getSurface();
-
-            // Создаем CaptureRequest.Builder
-            captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            captureRequestBuilder.addTarget(surface);
-
-            // Создаем CameraCaptureSession
-            cameraDevice.createCaptureSession(Collections.singletonList(surface),
-                    new CameraCaptureSession.StateCallback() {
-                        @Override
-                        public void onConfigured(@NonNull CameraCaptureSession session) {
-                            // Камера успешно настроена
-                            cameraCaptureSession = session;
-                            updatePreview();
-
-                        }
-
-                        @Override
-                        public void onConfigureFailed(@NonNull CameraCaptureSession session) {
-                            // Ошибка при настройке камеры
-                            Log.e(TAG, "Failed to configure camera capture session");
-                        }
-                    }, backgroundHandler);
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void updatePreview() {
-        if (cameraDevice == null) {
-            return;
-        }
-
-        // Автоматическое фокусирование
-        captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
-                CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-
-        try {
-            // Начинаем отображение предварительного просмотра
-            cameraCaptureSession.setRepeatingRequest(captureRequestBuilder.build(),
-                    null, backgroundHandler);
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-    }
-   
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        startBackgroundThread();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        stopBackgroundThread();
-    }
-
-    private void startBackgroundThread() {
-        backgroundThread = new HandlerThread("CameraBackground");
-        backgroundThread.start();
-        backgroundHandler = new Handler(backgroundThread.getLooper());
-    }
-
-    private void stopBackgroundThread() {
-        backgroundThread.quitSafely();
-        try {
-            backgroundThread.join();
-            backgroundThread = null;
-            backgroundHandler = null;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
     
 }
