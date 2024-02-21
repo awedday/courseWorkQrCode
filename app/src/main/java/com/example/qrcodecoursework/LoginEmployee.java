@@ -28,6 +28,7 @@ public class LoginEmployee extends AppCompatActivity {
     private Button btnLogin;
 
     private ApiInterface apiInterface;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,53 +37,38 @@ public class LoginEmployee extends AppCompatActivity {
         etPassword = findViewById(R.id.et_password);
         btnLogin = findViewById(R.id.btn_login);
 
-        apiInterface = RequestBuilder.buildRequest().create(ApiInterface.class);
+        apiInterface = RequestBuilder.buildRequest();
 
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                String login = etLogin.getText().toString();
-//                String password = etPassword.getText().toString();
+                String login = etLogin.getText().toString();
+                String password = etPassword.getText().toString();
 
-                Call<ArrayList<Employee>> getEmployeeList = apiInterface.getEmployeeList();
-                getEmployeeList.enqueue(new Callback<ArrayList<Employee>>() {
+                // Отправляем запрос на сервер для аутентификации
+                Call<Employee> call = apiInterface.login(login, password);
+                call.enqueue(new Callback<Employee>() {
                     @Override
-                    public void onResponse(Call<ArrayList<Employee>> call, Response<ArrayList<Employee>> response) {
+                    public void onResponse(Call<Employee> call, Response<Employee> response) {
                         if (response.isSuccessful()) {
-                            ArrayList<Employee> employees = response.body();
-                            if (employees != null && !employees.isEmpty()) {
-                                for (Employee employee : employees) {
-                                    // Проверяем совпадение логина и пароля
-                                    if (employee.getMail().equals(etLogin.getText().toString()) &&
-                                            employee.getPassword().equals(etPassword.getText().toString())) {
-
-                                        // Логин и пароль верны, перенаправляем на другое окно
-                                        Intent intent = new Intent(LoginEmployee.this, MainActivity.class);
-                                        startActivity(intent);
-                                        finish(); // Закрываем текущую активность, чтобы пользователь не мог вернуться назад
-                                        return; // Завершаем цикл, так как найдено совпадение
-                                    }
-                                }
-                                // Если цикл завершился, значит ни одно совпадение не найдено
-                                Log.d("Login", "Invalid credentials");
-                            } else {
-                                Log.d("Employee", "No employees found");
-                            }
+                            // Аутентификация успешна
+                            Employee employee = response.body();
+                            // Переходим на новое окно
+                            Intent intent = new Intent(LoginEmployee.this, MainActivity.class);
+                            startActivity(intent);
+                            finish(); // Закрываем текущее окно
                         } else {
-                            Log.e("Employee", "Failed to fetch employees. Error code: " + response.code());
+                            // Ошибка аутентификации
+                            Toast.makeText(LoginEmployee.this, "Incorrect login or password", Toast.LENGTH_SHORT).show();
                         }
                     }
 
                     @Override
-                    public void onFailure(Call<ArrayList<Employee>> call, Throwable t) {
-                        Log.e("API Error", "Failed to fetch employees", t);
-
-                        // Отображаем пользователю сообщение об ошибке с помощью Toast
-                        Toast.makeText(LoginEmployee.this, "Failed to fetch employees. Please check your internet connection.", Toast.LENGTH_SHORT).show();
+                    public void onFailure(Call<Employee> call, Throwable t) {
+                        // Ошибка при выполнении запроса
+                        Toast.makeText(LoginEmployee.this, "Failed to authenticate. Please try again.", Toast.LENGTH_SHORT).show();
                     }
                 });
-
-
             }
         });
     }
