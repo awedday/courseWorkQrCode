@@ -3,7 +3,7 @@ package com.example.qrcodecoursework.Models;
 import com.google.gson.annotations.SerializedName;
 
 public class Employee {
-    @SerializedName("id_Employee")
+    @SerializedName("idEmployee")
     public int id;
     @SerializedName("firstNameEmployee")
     public String firstName;

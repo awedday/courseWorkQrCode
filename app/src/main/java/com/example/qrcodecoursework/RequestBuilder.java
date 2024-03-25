@@ -17,7 +17,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RequestBuilder {
-    public static String URL = "https://192.168.50.232:7022/api/";
+    public static String URL = "https://192.168.174.144:7062/api/";
     private static Retrofit retrofit = null;
 
     private static ApiInterface apiInterface;

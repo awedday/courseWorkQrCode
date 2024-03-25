@@ -2,6 +2,7 @@ package com.example.qrcodecoursework;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -39,6 +40,14 @@ public class LoginEmployee extends AppCompatActivity {
 
         apiInterface = RequestBuilder.buildRequest();
 
+        SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+        boolean isLoggedIn = sharedPreferences.getBoolean("isLoggedIn", false);
+        if (isLoggedIn) {
+            Intent intent = new Intent(LoginEmployee.this, MainActivity.class);
+            startActivity(intent);
+            finish();
+        }
+
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -53,6 +62,17 @@ public class LoginEmployee extends AppCompatActivity {
                         if (response.isSuccessful()) {
                             // Аутентификация успешна
                             Employee employee = response.body();
+                            SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+                            SharedPreferences.Editor editor = sharedPreferences.edit();
+                            editor.putBoolean("isLoggedIn", true);
+                            editor.apply();
+
+                            SharedPreferences loginsharedPreferences = getSharedPreferences("LogPass", Context.MODE_PRIVATE);
+                            SharedPreferences.Editor editorlogin = loginsharedPreferences.edit();
+                            editorlogin.putString("login", login); // Сохраняем логин
+                            editorlogin.putString("password", password); // Сохраняем пароль
+                            editorlogin.apply();
+
                             // Переходим на новое окно
                             Intent intent = new Intent(LoginEmployee.this, MainActivity.class);
                             startActivity(intent);

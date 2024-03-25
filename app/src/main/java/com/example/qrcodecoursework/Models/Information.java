@@ -3,12 +3,14 @@ package com.example.qrcodecoursework.Models;
 import com.google.gson.annotations.SerializedName;
 
 public class Information {
-    @SerializedName("")
+    @SerializedName("idInformation")
     public int idInformation;
-    @SerializedName("")
-    public int locationInformation;
-    @SerializedName("")
-    public int distanceInformation;
-    @SerializedName("")
+    @SerializedName("locationInformation")
+    public String locationInformation;
+    @SerializedName("distanceInformation")
+    public float distanceInformation;
+    @SerializedName("androidInformation")
+    public String androidInformation;
+    @SerializedName("employeeId")
     public int employeeId;
 }
