@@ -1,0 +1,25 @@
+name: Java Check
+on: 
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  eslint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Use Java
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11.0.21'
+      - name: Install dependencies
+        run: mvn -B package --file pom.xml
+      - name: Run tests
+        run: mvn test

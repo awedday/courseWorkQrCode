@@ -63,15 +63,14 @@ public class ProfileActivity extends AppCompatActivity {
         TextView textViewSecondName = findViewById(R.id.textViewSecondName);
         TextView textViewMiddleName = findViewById(R.id.textViewMiddleName);
         TextView textViewEmail = findViewById(R.id.textViewEmail);
-        EditText editTextPassword = findViewById(R.id.editTextPassword);
-        EditText editTextPhone = findViewById(R.id.editTextPhone);
+
+        TextView editTextPhone = findViewById(R.id.editTextPhone);
 
         // Установить значения представлений на основе данных о сотруднике
         textViewFirstName.setText(employee.getFirstName());
         textViewSecondName.setText(employee.getSecondName());
         textViewMiddleName.setText(employee.getMiddleName());
         textViewEmail.setText(employee.getMail());
-        editTextPassword.setText(employee.getPassword());
         editTextPhone.setText(employee.getPhone());
 
         // Запретить редактирование текста в представлениях для имени, фамилии, отчества и почты

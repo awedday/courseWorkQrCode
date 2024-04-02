@@ -43,24 +43,16 @@
         android:layout_marginTop="16dp"
         android:layout_centerHorizontal="true"/>
 
-    <!-- Поле пароля -->
-    <EditText
-        android:id="@+id/editTextPassword"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Пароль"
-        android:layout_below="@id/textViewEmail"
-        android:layout_marginTop="16dp"
-        android:layout_centerHorizontal="true"/>
+
 
     <!-- Поле телефона -->
-    <EditText
+    <TextView
         android:id="@+id/editTextPhone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Телефон"
-        android:layout_below="@id/editTextPassword"
-        android:layout_marginTop="16dp"
+        android:layout_below="@id/textViewMiddleName"
+        android:layout_marginTop="26dp"
         android:layout_centerHorizontal="true"/>
 
 

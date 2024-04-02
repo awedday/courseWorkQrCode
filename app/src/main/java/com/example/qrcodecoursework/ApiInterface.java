@@ -39,4 +39,3 @@ public interface ApiInterface {
     Call<History> getLatestHistory(@Path("employeeId") int employeeId);
 
 }
-
