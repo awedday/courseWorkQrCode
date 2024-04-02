@@ -36,5 +36,9 @@ jobs:
     - name: Build debug APK
       run: ./gradlew assembleDebug
       
+    - name: Run PMD
+      run: |
+        ./gradlew pmdMain
+        
     - name: Run tests
       run: ./gradlew test
