@@ -37,7 +37,7 @@ jobs:
       run: ./gradlew assembleDebug
       
     - name: Run PMD (Static code analysis)
-      run: ./gradlew pmdMain
+      run: ./gradlew pmd
       continue-on-error: true
       
     - name: Run tests
